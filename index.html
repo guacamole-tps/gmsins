@@ -74,6 +74,31 @@
     <div id="loading-state">Loading stories…</div>
     <div id="empty-state">No stories found for that date.</div>
     <div id="gallery"></div>
+    
+    <!-- ══ Pagination ════════════════════════════════════ -->
+    <div id="pagination">
+      <button id="prev-page" class="page-btn" aria-label="Previous page">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+             fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6"/>
+        </svg>
+        <span>Previous</span>
+      </button>
+      
+      <span id="page-info">—</span>
+      
+      <div id="page-numbers" aria-label="Page numbers"></div>
+      
+      <button id="next-page" class="page-btn" aria-label="Next page">
+        <span>Next</span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+             fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="9 18 15 12 9 6"/>
+        </svg>
+      </button>
+    </div>
   </main>
 
   <!-- ══ Footer ═══════════════════════════════════════ -->
