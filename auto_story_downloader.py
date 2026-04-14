@@ -28,27 +28,63 @@ CHROME_PROFILE_DIR = Path(__file__).parent.parent / "chrome_profile"
 async def wait_for_login(page):
     print("[*] Browser opened. Please log in to Instagram.")
     print("[*] Waiting for you to complete login (up to 3 minutes)...")
-    try:
-        await page.wait_for_url(
-            re.compile(r"https://www\.instagram\.com/(?!accounts/login)(?!accounts/onetap)"),
-            timeout=180_000,
-        )
-        await page.wait_for_timeout(2000)
-        print("[ok] Login detected.")
-    except PlaywrightTimeoutError:
-        raise RuntimeError("Login timed out after 3 minutes.")
+    print("[*] Complete ALL steps including two-factor authentication.")
+    
+    # Check periodically for login completion
+    max_attempts = 180  # 3 minutes, checking every second
+    for i in range(max_attempts):
+        await page.wait_for_timeout(1000)
+        
+        # Check if logged in with error handling for navigation
+        try:
+            is_logged_in = await page.evaluate("""
+                () => {
+                    return !!document.cookie.match(/sessionid=/) ||
+                           !!document.querySelector('a[href*="/direct/inbox/"]') ||
+                           !!document.querySelector('svg[aria-label="Home"]') ||
+                           !!document.querySelector('a[href="/"][role="link"]');
+                }
+            """)
+        except PlaywrightError:
+            # Page might be navigating, wait and retry
+            continue
+        
+        if is_logged_in:
+            await page.wait_for_timeout(2000)
+            print("[ok] Login detected.")
+            return
+        
+        # Show progress every 30 seconds
+        if i > 0 and i % 30 == 0:
+            print(f"[*] Still waiting for login... ({i//60} minute{'s' if i//60 > 1 else ''} passed)")
+    
+    raise RuntimeError("Login timed out after 3 minutes.")
 
 
 async def ensure_logged_in(page):
     """Check if currently logged in; if not, navigate to login page and wait for manual login."""
-    is_logged_in = await page.evaluate("""
-        () => {
-            return !!document.cookie.match(/sessionid=/) ||
-                   !!document.querySelector('a[href*="/direct/inbox/"]') ||
-                   !!document.querySelector('svg[aria-label="Home"]') ||
-                   !!document.querySelector('a[href="/"][role="link"]');
-        }
-    """)
+    # Check current URL first
+    current_url = page.url
+    if "accounts/login" in current_url or "accounts/onetap" in current_url:
+        print("[!] Not logged in. Redirecting to login...")
+        await page.goto("https://www.instagram.com/accounts/login/", wait_until="domcontentloaded", timeout=60000)
+        await wait_for_login(page)
+        return False
+    
+    # Check if actually logged in by looking for logged-in elements
+    try:
+        is_logged_in = await page.evaluate("""
+            () => {
+                return !!document.cookie.match(/sessionid=/) ||
+                       !!document.querySelector('a[href*="/direct/inbox/"]') ||
+                       !!document.querySelector('svg[aria-label="Home"]') ||
+                       !!document.querySelector('a[href="/"][role="link"]');
+            }
+        """)
+    except PlaywrightError:
+        # Page might be navigating, assume not logged in
+        is_logged_in = False
+    
     if not is_logged_in:
         print("[!] Session appears expired or invalid. Redirecting to login...")
         await page.goto("https://www.instagram.com/accounts/login/", wait_until="domcontentloaded", timeout=60000)
