@@ -380,7 +380,7 @@ main {
 /* ── Photo card ── */
 .photo-card {
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   border-radius: var(--radius-card);
   border: 1px solid var(--border-subtle);
   background: var(--bg-card);
