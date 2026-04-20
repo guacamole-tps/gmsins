@@ -217,16 +217,68 @@
     commentsSection.appendChild(commentsContent);
     card.appendChild(commentsSection);
 
-    // Simple comments loading - collapsed by default
+    // Smart comments loading - check for existing comments
     const toggleBtn = commentsHeader.querySelector(".comments-toggle-btn");
     const commentsCount = commentsHeader.querySelector(".comments-count");
     let commentsLoaded = false;
+    let commentsExpanded = false;
     
     // Set initial collapsed state
     toggleBtn.setAttribute("aria-expanded", "false");
     toggleBtn.style.transform = "rotate(0deg)";
     commentsContent.style.display = "none";
     commentsStatus.textContent = "Add a comment";
+    
+    // Check if discussion has comments using GitHub API
+    async function checkDiscussionComments() {
+      const config = getGiscusConfig();
+      if (!hasRequiredGiscusConfig(config)) return false;
+      
+      const item = { src };
+      const term = buildDiscussionTerm(item);
+      
+      try {
+        // Use GitHub API to check for discussion comments
+        const apiUrl = `https://api.github.com/repos/${config.repo}/discussions?per_page=100`;
+        const response = await fetch(apiUrl);
+        const discussions = await response.json();
+        
+        // Find discussion matching our term
+        const discussion = discussions.find(d => 
+          d.title.includes(term) && d.comments > 0
+        );
+        
+        return discussion && discussion.comments > 0;
+      } catch (error) {
+        console.warn('Could not check discussion comments:', error);
+        return false;
+      }
+    }
+    
+    // Auto-expand if comments exist
+    async function autoExpandIfComments() {
+      const hasComments = await checkDiscussionComments();
+      
+      if (hasComments) {
+        // Auto-expand and load comments
+        commentsExpanded = true;
+        toggleBtn.setAttribute("aria-expanded", "true");
+        toggleBtn.style.transform = "rotate(180deg)";
+        commentsContent.style.display = "block";
+        commentsStatus.textContent = "Loading comments...";
+        loadInlineComments(commentsContainer, src, commentsStatus);
+      } else {
+        // Keep collapsed
+        commentsExpanded = false;
+        toggleBtn.setAttribute("aria-expanded", "false");
+        toggleBtn.style.transform = "rotate(0deg)";
+        commentsContent.style.display = "none";
+        commentsStatus.textContent = "Add a comment";
+      }
+    }
+    
+    // Start checking
+    autoExpandIfComments();
     
     // Toggle functionality
     toggleBtn.addEventListener("click", (e) => {
@@ -235,8 +287,9 @@
       toggleBtn.setAttribute("aria-expanded", !isExpanded);
       commentsContent.style.display = isExpanded ? "none" : "block";
       toggleBtn.style.transform = isExpanded ? "rotate(0deg)" : "rotate(180deg)";
+      commentsExpanded = !isExpanded;
       
-      // Load comments only when user expands
+      // Load comments if user manually expands
       if (!commentsLoaded && !isExpanded) {
         commentsLoaded = true;
         commentsStatus.textContent = "Loading comments...";
