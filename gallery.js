@@ -217,102 +217,46 @@
     commentsSection.appendChild(commentsContent);
     card.appendChild(commentsSection);
 
-    // Smart comments loading - load first, then check for content
+    // Simple comments loading - always collapsed by default
     const toggleBtn = commentsHeader.querySelector(".comments-toggle-btn");
     const commentsCount = commentsHeader.querySelector(".comments-count");
     let commentsLoaded = false;
-    let commentsExpanded = false;
     
     // Set initial collapsed state
     toggleBtn.setAttribute("aria-expanded", "false");
     toggleBtn.style.transform = "rotate(0deg)";
     commentsContent.style.display = "none";
-    commentsStatus.textContent = "Checking for comments...";
-    
-    // Load comments and check if they exist
-    async function loadAndCheckComments() {
-      if (commentsLoaded) return;
-      
-      commentsLoaded = true;
-      commentsStatus.textContent = "Loading comments...";
-      
-      // Load comments first
-      await loadInlineComments(commentsContainer, src, commentsStatus);
-      
-      // Wait for Giscus to load, then check for comments
-      setTimeout(() => {
-        const hasComments = checkIfCommentsExist(commentsContainer);
-        
-        if (hasComments) {
-          // Keep expanded if comments exist
-          commentsExpanded = true;
-          toggleBtn.setAttribute("aria-expanded", "true");
-          toggleBtn.style.transform = "rotate(180deg)";
-          commentsContent.style.display = "block";
-          commentsStatus.textContent = "";
-        } else {
-          // Collapse if no comments
-          commentsExpanded = false;
-          toggleBtn.setAttribute("aria-expanded", "false");
-          toggleBtn.style.transform = "rotate(0deg)";
-          commentsContent.style.display = "none";
-          commentsStatus.textContent = "Add a comment";
-        }
-      }, 3000); // Give Giscus 3 seconds to load
-    }
-    
-    // Check if Giscus has loaded any comments
-    function checkIfCommentsExist(container) {
-      // Look for common Giscus comment elements
-      const commentSelectors = [
-        '.giscus-comment',
-        '.comment',
-        '[data-comment-id]',
-        '.giscus-comments-container',
-        'iframe[src*="giscus"]'
-      ];
-      
-      for (const selector of commentSelectors) {
-        const elements = container.querySelectorAll(selector);
-        if (elements.length > 0) {
-          // If it's an iframe, check if it has content
-          if (selector.includes('iframe')) {
-            const iframe = elements[0];
-            try {
-              // Try to check if iframe has loaded content
-              return iframe.src && iframe.src.includes('giscus');
-            } catch (e) {
-              // If we can't access iframe, assume it has content
-              return true;
-            }
-          }
-          return true;
-        }
-      }
-      
-      return false;
-    }
-    
-    // Start loading and checking
-    loadAndCheckComments();
+    commentsStatus.textContent = "Add a comment";
     
     // Toggle functionality
     toggleBtn.addEventListener("click", (e) => {
       e.stopPropagation(); // Prevent opening lightbox
       const isExpanded = toggleBtn.getAttribute("aria-expanded") === "true";
       toggleBtn.setAttribute("aria-expanded", !isExpanded);
-      commentsContent.style.display = isExpanded ? "none" : "block";
       toggleBtn.style.transform = isExpanded ? "rotate(0deg)" : "rotate(180deg)";
-      commentsExpanded = !isExpanded;
       
-      // Load comments if user manually expands
+      // Use CSS class for smooth animation
+      if (!isExpanded) {
+        commentsSection.classList.add("open");
+        commentsContent.style.display = "block";
+      } else {
+        commentsSection.classList.remove("open");
+        setTimeout(() => {
+          if (commentsSection.classList.contains("open") === false) {
+            commentsContent.style.display = "none";
+          }
+        }, 300); // Wait for animation to complete
+      }
+      
+      // Load comments only when user expands
       if (!commentsLoaded && !isExpanded) {
         commentsLoaded = true;
         commentsStatus.textContent = "Loading comments...";
         loadInlineComments(commentsContainer, src, commentsStatus);
       }
     });
-
+    
+    
     card.addEventListener("click", () => openLightbox(flatIdx));
     card.addEventListener("keydown", (e) => {
       if (e.key === "Enter" || e.key === " ") openLightbox(flatIdx);
