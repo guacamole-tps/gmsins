@@ -217,7 +217,7 @@
     commentsSection.appendChild(commentsContent);
     card.appendChild(commentsSection);
 
-    // Smart comments loading - check for existing comments
+    // Smart comments loading - load first, then check for content
     const toggleBtn = commentsHeader.querySelector(".comments-toggle-btn");
     const commentsCount = commentsHeader.querySelector(".comments-count");
     let commentsLoaded = false;
@@ -227,71 +227,74 @@
     toggleBtn.setAttribute("aria-expanded", "false");
     toggleBtn.style.transform = "rotate(0deg)";
     commentsContent.style.display = "none";
-    commentsStatus.textContent = "Add a comment";
+    commentsStatus.textContent = "Checking for comments...";
     
-    // Check if discussion has comments using GitHub API
-    async function checkDiscussionComments() {
-      const config = getGiscusConfig();
-      if (!hasRequiredGiscusConfig(config)) return false;
+    // Load comments and check if they exist
+    async function loadAndCheckComments() {
+      if (commentsLoaded) return;
       
-      const item = { src };
-      const term = buildDiscussionTerm(item);
+      commentsLoaded = true;
+      commentsStatus.textContent = "Loading comments...";
       
-      try {
-        // Use GitHub API to check for discussion comments
-        const apiUrl = `https://api.github.com/repos/${config.repo}/discussions?per_page=100`;
-        const response = await fetch(apiUrl, {
-          headers: {
-            'Accept': 'application/vnd.github.v3+json'
-          }
-        });
+      // Load comments first
+      await loadInlineComments(commentsContainer, src, commentsStatus);
+      
+      // Wait for Giscus to load, then check for comments
+      setTimeout(() => {
+        const hasComments = checkIfCommentsExist(commentsContainer);
         
-        if (!response.ok) {
-          console.warn('GitHub API response not OK:', response.status);
-          return false;
+        if (hasComments) {
+          // Keep expanded if comments exist
+          commentsExpanded = true;
+          toggleBtn.setAttribute("aria-expanded", "true");
+          toggleBtn.style.transform = "rotate(180deg)";
+          commentsContent.style.display = "block";
+          commentsStatus.textContent = "";
+        } else {
+          // Collapse if no comments
+          commentsExpanded = false;
+          toggleBtn.setAttribute("aria-expanded", "false");
+          toggleBtn.style.transform = "rotate(0deg)";
+          commentsContent.style.display = "none";
+          commentsStatus.textContent = "Add a comment";
         }
-        
-        const discussions = await response.json();
-        console.log('Checking discussions for term:', term);
-        console.log('Found discussions:', discussions.length);
-        
-        // Find discussion matching our term
-        const discussion = discussions.find(d => 
-          d.title.includes(term) && d.comments > 0
-        );
-        
-        console.log('Matching discussion:', discussion ? 'found' : 'not found');
-        return discussion && discussion.comments > 0;
-      } catch (error) {
-        console.warn('Could not check discussion comments:', error);
-        return false;
-      }
+      }, 3000); // Give Giscus 3 seconds to load
     }
     
-    // Auto-expand if comments exist
-    async function autoExpandIfComments() {
-      const hasComments = await checkDiscussionComments();
+    // Check if Giscus has loaded any comments
+    function checkIfCommentsExist(container) {
+      // Look for common Giscus comment elements
+      const commentSelectors = [
+        '.giscus-comment',
+        '.comment',
+        '[data-comment-id]',
+        '.giscus-comments-container',
+        'iframe[src*="giscus"]'
+      ];
       
-      if (hasComments) {
-        // Auto-expand and load comments
-        commentsExpanded = true;
-        toggleBtn.setAttribute("aria-expanded", "true");
-        toggleBtn.style.transform = "rotate(180deg)";
-        commentsContent.style.display = "block";
-        commentsStatus.textContent = "Loading comments...";
-        loadInlineComments(commentsContainer, src, commentsStatus);
-      } else {
-        // Keep collapsed
-        commentsExpanded = false;
-        toggleBtn.setAttribute("aria-expanded", "false");
-        toggleBtn.style.transform = "rotate(0deg)";
-        commentsContent.style.display = "none";
-        commentsStatus.textContent = "Add a comment";
+      for (const selector of commentSelectors) {
+        const elements = container.querySelectorAll(selector);
+        if (elements.length > 0) {
+          // If it's an iframe, check if it has content
+          if (selector.includes('iframe')) {
+            const iframe = elements[0];
+            try {
+              // Try to check if iframe has loaded content
+              return iframe.src && iframe.src.includes('giscus');
+            } catch (e) {
+              // If we can't access iframe, assume it has content
+              return true;
+            }
+          }
+          return true;
+        }
       }
+      
+      return false;
     }
     
-    // Start checking
-    autoExpandIfComments();
+    // Start loading and checking
+    loadAndCheckComments();
     
     // Toggle functionality
     toggleBtn.addEventListener("click", (e) => {
