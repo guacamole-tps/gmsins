@@ -186,7 +186,12 @@
       card.appendChild(badge);
     }
 
-    // Add inline comments section
+    // Add comment preview section
+    const commentPreview = document.createElement("div");
+    commentPreview.className = "comment-preview";
+    commentPreview.style.display = "none"; // Hidden by default
+    
+    // Add full comments section (collapsible)
     const commentsSection = document.createElement("div");
     commentsSection.className = "card-comments";
     
@@ -209,63 +214,44 @@
     
     const commentsStatus = document.createElement("p");
     commentsStatus.className = "comments-status";
-    commentsStatus.textContent = "Loading comments...";
+    commentsStatus.textContent = "Add a comment";
     
     commentsContent.appendChild(commentsStatus);
     commentsContent.appendChild(commentsContainer);
     commentsSection.appendChild(commentsHeader);
     commentsSection.appendChild(commentsContent);
+    
+    card.appendChild(commentPreview);
     card.appendChild(commentsSection);
 
-    // Smart comments loading
+    // Simple comments loading - collapsed by default
     const toggleBtn = commentsHeader.querySelector(".comments-toggle-btn");
     const commentsCount = commentsHeader.querySelector(".comments-count");
     let commentsLoaded = false;
-    let commentsExpanded = false;
     
-    // Check if discussion has comments and expand accordingly
-    async function checkAndLoadComments() {
-      if (commentsLoaded) return;
-      
-      commentsLoaded = true;
-      commentsStatus.textContent = "Loading comments...";
-      
-      // Load comments first
-      await loadInlineComments(commentsContainer, src, commentsStatus);
-      
-      // Check if there are any comments after a short delay
-      setTimeout(() => {
-        const hasComments = checkForComments(commentsContainer);
-        
-        if (hasComments) {
-          // Expand if there are comments
-          commentsExpanded = true;
-          toggleBtn.setAttribute("aria-expanded", "true");
-          toggleBtn.style.transform = "rotate(180deg)";
-          commentsContent.style.display = "block";
-          commentsStatus.textContent = "";
-        } else {
-          // Keep collapsed if no comments
-          commentsExpanded = false;
-          toggleBtn.setAttribute("aria-expanded", "false");
-          toggleBtn.style.transform = "rotate(0deg)";
-          commentsContent.style.display = "none";
-          commentsStatus.textContent = "No comments yet";
-        }
-      }, 2000); // Wait for Giscus to load
-    }
-    
-    // Start checking comments
-    checkAndLoadComments();
+    // Set initial collapsed state
+    toggleBtn.setAttribute("aria-expanded", "false");
+    toggleBtn.style.transform = "rotate(0deg)";
+    commentsContent.style.display = "none";
+    commentsStatus.textContent = "Add a comment";
     
     // Toggle functionality
     toggleBtn.addEventListener("click", (e) => {
       e.stopPropagation(); // Prevent opening lightbox
+      expandComments();
+    });
+    
+    // Click on preview also expands comments
+    commentPreview.addEventListener("click", (e) => {
+      e.stopPropagation(); // Prevent opening lightbox
+      expandComments();
+    });
+    
+    function expandComments() {
       const isExpanded = toggleBtn.getAttribute("aria-expanded") === "true";
       toggleBtn.setAttribute("aria-expanded", !isExpanded);
       commentsContent.style.display = isExpanded ? "none" : "block";
       toggleBtn.style.transform = isExpanded ? "rotate(0deg)" : "rotate(180deg)";
-      commentsExpanded = !isExpanded;
       
       // Load comments if user manually expands
       if (!commentsLoaded && !isExpanded) {
@@ -273,7 +259,7 @@
         commentsStatus.textContent = "Loading comments...";
         loadInlineComments(commentsContainer, src, commentsStatus);
       }
-    });
+    }
 
     card.addEventListener("click", () => openLightbox(flatIdx));
     card.addEventListener("keydown", (e) => {
@@ -434,25 +420,15 @@
     giscusContainer.appendChild(script);
   }
 
-  function checkForComments(container) {
-    // Check if Giscus has loaded any comments
-    const iframe = container.querySelector('iframe');
-    if (!iframe) return false;
-    
-    try {
-      // Try to access iframe content (may be blocked by CORS)
-      const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-      const commentElements = iframeDoc.querySelectorAll('.giscus-comment, .comment, [data-comment-id]');
-      return commentElements.length > 0;
-    } catch (e) {
-      // Fallback: check if iframe has content (indicates comments exist)
-      return iframe.src && iframe.src.includes('giscus');
-    }
-  }
-
+  
   function loadInlineComments(container, src, statusElement) {
+    console.log("Loading comments for:", src);
+    
     const config = getGiscusConfig();
+    console.log("Giscus config:", config);
+    
     if (!hasRequiredGiscusConfig(config)) {
+      console.error("Giscus not configured properly");
       container.innerHTML = "";
       statusElement.textContent = "Comments not configured";
       return;
@@ -463,6 +439,7 @@
 
     const item = { src };
     const term = buildDiscussionTerm(item);
+    console.log("Discussion term:", term);
 
     const script = document.createElement("script");
     script.src = "https://giscus.app/client.js";
@@ -479,8 +456,62 @@
     script.setAttribute("data-input-position", "top");
     script.setAttribute("data-theme", config.theme);
     script.setAttribute("data-lang", config.lang);
-    script.addEventListener("load", () => statusElement.textContent = "");
+    
+    script.addEventListener("load", () => {
+      console.log("Giscus script loaded successfully");
+      statusElement.textContent = "";
+      
+      // Check for comments after a delay to allow Giscus to render
+      setTimeout(() => {
+        checkAndShowComments(commentsContainer, commentPreview, src);
+      }, 3000);
+    });
+    
+    script.addEventListener("error", (e) => {
+      console.error("Giscus script failed to load:", e);
+      statusElement.textContent = "Failed to load comments";
+    });
+    
     container.appendChild(script);
+    console.log("Giscus script appended to container");
+  }
+
+  function checkAndShowComments(commentsContainer, commentPreview, src) {
+    console.log("Checking for comments in:", src);
+    
+    // Try to detect if there are comments
+    const iframe = commentsContainer.querySelector('iframe');
+    if (!iframe) {
+      console.log("No iframe found yet");
+      return;
+    }
+    
+    // Simple heuristic: if iframe has content, assume there might be comments
+    // We'll show a simple preview message
+    try {
+      // Check if we can access iframe content (might be blocked by CORS)
+      const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+      const hasContent = iframeDoc.body && iframeDoc.body.innerHTML.length > 100;
+      
+      if (hasContent) {
+        showCommentPreview(commentPreview, src);
+      }
+    } catch (e) {
+      // Fallback: always show preview for images that have been loaded
+      // This is a simple approach - user can see if there are actually comments when they click
+      console.log("Cannot access iframe content, showing preview anyway");
+      showCommentPreview(commentPreview, src);
+    }
+  }
+
+  function showCommentPreview(commentPreview, src) {
+    commentPreview.innerHTML = `
+      <div class="comment-preview-content">
+        <span class="comment-preview-icon">Comments</span>
+        <span class="comment-preview-text">Click to view and add comments</span>
+      </div>
+    `;
+    commentPreview.style.display = "block";
   }
 
   function syncCommentsForCurrentImage() {

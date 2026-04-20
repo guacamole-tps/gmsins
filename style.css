@@ -411,6 +411,41 @@ main {
   max-height: 380px;
 }
 
+/* Comment preview section */
+.comment-preview {
+  border-top: 1px solid var(--border-subtle);
+  background: rgba(11, 16, 24, 0.4);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  padding: 6px 10px;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.comment-preview:hover {
+  background: rgba(42, 92, 143, 0.15);
+}
+
+.comment-preview-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  font-family: 'Montserrat', sans-serif;
+}
+
+.comment-preview-icon {
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--blue);
+}
+
+.comment-preview-text {
+  opacity: 0.8;
+}
+
 /* Inline comments section */
 .card-comments {
   border-top: 1px solid var(--border-subtle);
