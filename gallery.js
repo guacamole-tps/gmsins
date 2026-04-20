@@ -186,6 +186,57 @@
       card.appendChild(badge);
     }
 
+    // Add inline comments section
+    const commentsSection = document.createElement("div");
+    commentsSection.className = "card-comments";
+    
+    const commentsHeader = document.createElement("div");
+    commentsHeader.className = "comments-header";
+    commentsHeader.innerHTML = `
+      <span class="comments-count">Comments</span>
+      <button class="comments-toggle-btn" aria-expanded="false">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+      </button>
+    `;
+    
+    const commentsContent = document.createElement("div");
+    commentsContent.className = "comments-content";
+    commentsContent.style.display = "none";
+    
+    const commentsContainer = document.createElement("div");
+    commentsContainer.className = "giscus-inline-container";
+    
+    const commentsStatus = document.createElement("p");
+    commentsStatus.className = "comments-status";
+    commentsStatus.textContent = "Click to load comments";
+    
+    commentsContent.appendChild(commentsStatus);
+    commentsContent.appendChild(commentsContainer);
+    commentsSection.appendChild(commentsHeader);
+    commentsSection.appendChild(commentsContent);
+    card.appendChild(commentsSection);
+
+    // Toggle comments
+    let commentsLoaded = false;
+    const toggleBtn = commentsHeader.querySelector(".comments-toggle-btn");
+    const commentsCount = commentsHeader.querySelector(".comments-count");
+    
+    toggleBtn.addEventListener("click", (e) => {
+      e.stopPropagation(); // Prevent opening lightbox
+      const isExpanded = toggleBtn.getAttribute("aria-expanded") === "true";
+      toggleBtn.setAttribute("aria-expanded", !isExpanded);
+      commentsContent.style.display = isExpanded ? "none" : "block";
+      toggleBtn.style.transform = isExpanded ? "rotate(0deg)" : "rotate(180deg)";
+      
+      if (!commentsLoaded && !isExpanded) {
+        commentsLoaded = true;
+        commentsStatus.textContent = "Loading comments...";
+        loadInlineComments(commentsContainer, src, commentsStatus);
+      }
+    });
+
     card.addEventListener("click", () => openLightbox(flatIdx));
     card.addEventListener("keydown", (e) => {
       if (e.key === "Enter" || e.key === " ") openLightbox(flatIdx);
@@ -343,6 +394,39 @@
     script.setAttribute("data-lang", config.lang);
     script.addEventListener("load", () => setCommentsStatus(""));
     giscusContainer.appendChild(script);
+  }
+
+  function loadInlineComments(container, src, statusElement) {
+    const config = getGiscusConfig();
+    if (!hasRequiredGiscusConfig(config)) {
+      container.innerHTML = "";
+      statusElement.textContent = "Comments not configured";
+      return;
+    }
+
+    container.innerHTML = "";
+    statusElement.textContent = "Loading comments...";
+
+    const item = { src };
+    const term = buildDiscussionTerm(item);
+
+    const script = document.createElement("script");
+    script.src = "https://giscus.app/client.js";
+    script.async = true;
+    script.crossOrigin = "anonymous";
+    script.setAttribute("data-repo", config.repo);
+    script.setAttribute("data-repo-id", config.repoId);
+    script.setAttribute("data-category", config.category);
+    script.setAttribute("data-category-id", config.categoryId);
+    script.setAttribute("data-mapping", config.mapping);
+    script.setAttribute("data-term", term);
+    script.setAttribute("data-reactions-enabled", config.reactionsEnabled);
+    script.setAttribute("data-emit-metadata", config.emitMetadata);
+    script.setAttribute("data-input-position", "top");
+    script.setAttribute("data-theme", config.theme);
+    script.setAttribute("data-lang", config.lang);
+    script.addEventListener("load", () => statusElement.textContent = "");
+    container.appendChild(script);
   }
 
   function syncCommentsForCurrentImage() {
