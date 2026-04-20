@@ -186,12 +186,7 @@
       card.appendChild(badge);
     }
 
-    // Add comment preview section
-    const commentPreview = document.createElement("div");
-    commentPreview.className = "comment-preview";
-    commentPreview.style.display = "none"; // Hidden by default
-    
-    // Add full comments section (collapsible)
+    // Add simple comments section
     const commentsSection = document.createElement("div");
     commentsSection.className = "card-comments";
     
@@ -208,58 +203,40 @@
     
     const commentsContent = document.createElement("div");
     commentsContent.className = "comments-content";
+    commentsContent.style.display = "none";
     
     const commentsContainer = document.createElement("div");
     commentsContainer.className = "giscus-inline-container";
     
     const commentsStatus = document.createElement("p");
     commentsStatus.className = "comments-status";
-    commentsStatus.textContent = "Add a comment";
+    commentsStatus.textContent = "Click to add comments";
     
     commentsContent.appendChild(commentsStatus);
     commentsContent.appendChild(commentsContainer);
     commentsSection.appendChild(commentsHeader);
     commentsSection.appendChild(commentsContent);
-    
-    card.appendChild(commentPreview);
     card.appendChild(commentsSection);
 
-    // Simple comments loading - collapsed by default
+    // Simple toggle - only allow first one to work
     const toggleBtn = commentsHeader.querySelector(".comments-toggle-btn");
-    const commentsCount = commentsHeader.querySelector(".comments-count");
     let commentsLoaded = false;
     
-    // Set initial collapsed state
-    toggleBtn.setAttribute("aria-expanded", "false");
-    toggleBtn.style.transform = "rotate(0deg)";
-    commentsContent.style.display = "none";
-    commentsStatus.textContent = "Add a comment";
-    
-    // Toggle functionality
     toggleBtn.addEventListener("click", (e) => {
       e.stopPropagation(); // Prevent opening lightbox
-      expandComments();
-    });
-    
-    // Click on preview also expands comments
-    commentPreview.addEventListener("click", (e) => {
-      e.stopPropagation(); // Prevent opening lightbox
-      expandComments();
-    });
-    
-    function expandComments() {
+      
       const isExpanded = toggleBtn.getAttribute("aria-expanded") === "true";
       toggleBtn.setAttribute("aria-expanded", !isExpanded);
       commentsContent.style.display = isExpanded ? "none" : "block";
       toggleBtn.style.transform = isExpanded ? "rotate(0deg)" : "rotate(180deg)";
       
-      // Load comments if user manually expands
+      // Load comments only when expanded and not loaded yet
       if (!commentsLoaded && !isExpanded) {
         commentsLoaded = true;
         commentsStatus.textContent = "Loading comments...";
-        loadInlineComments(commentsContainer, src, commentsStatus);
+        loadSimpleGiscus(commentsContainer, src, commentsStatus);
       }
-    }
+    });
 
     card.addEventListener("click", () => openLightbox(flatIdx));
     card.addEventListener("keydown", (e) => {
@@ -421,15 +398,80 @@
   }
 
   
-  function loadInlineComments(container, src, statusElement) {
-    console.log("Loading comments for:", src);
+  // Global Giscus management
+let globalGiscusInitialized = false;
+let currentGiscusTerm = null;
+
+function showCommentsForImage(src, statusElement, container) {
+  const config = getGiscusConfig();
+  if (!hasRequiredGiscusConfig(config)) {
+    statusElement.textContent = "Comments not configured";
+    return;
+  }
+
+  const item = { src };
+  const term = buildDiscussionTerm(item);
+  console.log("Showing comments for:", term);
+
+  // Clear container
+  container.innerHTML = "";
+  statusElement.textContent = "Loading comments...";
+
+  // If this is the same term, just show existing
+  if (currentGiscusTerm === term && globalGiscusInitialized) {
+    statusElement.textContent = "";
+    return;
+  }
+
+  currentGiscusTerm = term;
+
+  // Create Giscus container
+  const giscusDiv = document.createElement("div");
+  giscusDiv.setAttribute("data-repo", config.repo);
+  giscusDiv.setAttribute("data-repo-id", config.repoId);
+  giscusDiv.setAttribute("data-category", config.category);
+  giscusDiv.setAttribute("data-category-id", config.categoryId);
+  giscusDiv.setAttribute("data-mapping", config.mapping);
+  giscusDiv.setAttribute("data-term", term);
+  giscusDiv.setAttribute("data-reactions-enabled", config.reactionsEnabled);
+  giscusDiv.setAttribute("data-emit-metadata", config.emitMetadata);
+  giscusDiv.setAttribute("data-input-position", "top");
+  giscusDiv.setAttribute("data-theme", config.theme);
+  giscusDiv.setAttribute("data-lang", config.lang);
+  
+  container.appendChild(giscusDiv);
+
+  // Load Giscus script only once
+  if (!globalGiscusInitialized) {
+    globalGiscusInitialized = true;
+    const script = document.createElement("script");
+    script.src = "https://giscus.app/client.js";
+    script.async = true;
+    script.crossOrigin = "anonymous";
+    
+    script.addEventListener("load", () => {
+      console.log("Global Giscus loaded");
+      statusElement.textContent = "";
+    });
+    
+    script.addEventListener("error", (e) => {
+      console.error("Global Giscus failed:", e);
+      statusElement.textContent = "Failed to load";
+    });
+    
+    document.head.appendChild(script);
+  } else {
+    // Giscus already loaded, just update status
+    statusElement.textContent = "";
+    console.log("Using existing Giscus instance");
+  }
+}
+
+function loadSimpleGiscus(container, src, statusElement) {
+    console.log("Loading simple Giscus for:", src);
     
     const config = getGiscusConfig();
-    console.log("Giscus config:", config);
-    
     if (!hasRequiredGiscusConfig(config)) {
-      console.error("Giscus not configured properly");
-      container.innerHTML = "";
       statusElement.textContent = "Comments not configured";
       return;
     }
@@ -458,62 +500,19 @@
     script.setAttribute("data-lang", config.lang);
     
     script.addEventListener("load", () => {
-      console.log("Giscus script loaded successfully");
+      console.log("Giscus loaded for:", term);
       statusElement.textContent = "";
-      
-      // Check for comments after a delay to allow Giscus to render
-      setTimeout(() => {
-        checkAndShowComments(commentsContainer, commentPreview, src);
-      }, 3000);
     });
     
     script.addEventListener("error", (e) => {
-      console.error("Giscus script failed to load:", e);
-      statusElement.textContent = "Failed to load comments";
+      console.error("Giscus failed:", e);
+      statusElement.textContent = "Failed to load";
     });
     
     container.appendChild(script);
-    console.log("Giscus script appended to container");
   }
 
-  function checkAndShowComments(commentsContainer, commentPreview, src) {
-    console.log("Checking for comments in:", src);
-    
-    // Try to detect if there are comments
-    const iframe = commentsContainer.querySelector('iframe');
-    if (!iframe) {
-      console.log("No iframe found yet");
-      return;
-    }
-    
-    // Simple heuristic: if iframe has content, assume there might be comments
-    // We'll show a simple preview message
-    try {
-      // Check if we can access iframe content (might be blocked by CORS)
-      const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-      const hasContent = iframeDoc.body && iframeDoc.body.innerHTML.length > 100;
-      
-      if (hasContent) {
-        showCommentPreview(commentPreview, src);
-      }
-    } catch (e) {
-      // Fallback: always show preview for images that have been loaded
-      // This is a simple approach - user can see if there are actually comments when they click
-      console.log("Cannot access iframe content, showing preview anyway");
-      showCommentPreview(commentPreview, src);
-    }
-  }
-
-  function showCommentPreview(commentPreview, src) {
-    commentPreview.innerHTML = `
-      <div class="comment-preview-content">
-        <span class="comment-preview-icon">Comments</span>
-        <span class="comment-preview-text">Click to view and add comments</span>
-      </div>
-    `;
-    commentPreview.style.display = "block";
-  }
-
+  
   function syncCommentsForCurrentImage() {
     if (!commentsOpen) return;
     const item = flatImages[lightboxIndex];

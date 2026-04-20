@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Giscus Test</title>
+    <script src="giscus-config.js"></script>
+</head>
+<body>
+    <h1>Giscus Test Page</h1>
+    
+    <div>
+        <h3>Test 1: Direct Giscus</h3>
+        <div id="giscus-test-1"></div>
+    </div>
+    
+    <div>
+        <h3>Test 2: Dynamic Giscus</h3>
+        <button onclick="loadGiscus()">Load Giscus</button>
+        <div id="giscus-test-2"></div>
+    </div>
+    
+    <script>
+        // Test 1: Direct Giscus
+        const config = window.GMS_GISCUS_CONFIG;
+        console.log('Config:', config);
+        
+        const script1 = document.createElement('script');
+        script1.src = 'https://giscus.app/client.js';
+        script1.async = true;
+        script1.crossOrigin = 'anonymous';
+        script1.setAttribute('data-repo', config.repo);
+        script1.setAttribute('data-repo-id', config.repoId);
+        script1.setAttribute('data-category', config.category);
+        script1.setAttribute('data-category-id', config.categoryId);
+        script1.setAttribute('data-mapping', 'specific');
+        script1.setAttribute('data-term', 'test-discussion');
+        script1.setAttribute('data-reactions-enabled', '1');
+        script1.setAttribute('data-emit-metadata', '0');
+        script1.setAttribute('data-input-position', 'top');
+        script1.setAttribute('data-theme', 'dark_dimmed');
+        script1.setAttribute('data-lang', 'en');
+        
+        script1.addEventListener('load', () => console.log('Giscus 1 loaded'));
+        script1.addEventListener('error', (e) => console.error('Giscus 1 failed:', e));
+        
+        document.getElementById('giscus-test-1').appendChild(script1);
+        
+        // Test 2: Dynamic Giscus
+        function loadGiscus() {
+            const container = document.getElementById('giscus-test-2');
+            container.innerHTML = '';
+            
+            const script2 = document.createElement('script');
+            script2.src = 'https://giscus.app/client.js';
+            script2.async = true;
+            script2.crossOrigin = 'anonymous';
+            script2.setAttribute('data-repo', config.repo);
+            script2.setAttribute('data-repo-id', config.repoId);
+            script2.setAttribute('data-category', config.category);
+            script2.setAttribute('data-category-id', config.categoryId);
+            script2.setAttribute('data-mapping', 'specific');
+            script2.setAttribute('data-term', 'test-dynamic');
+            script2.setAttribute('data-reactions-enabled', '1');
+            script2.setAttribute('data-emit-metadata', '0');
+            script2.setAttribute('data-input-position', 'top');
+            script2.setAttribute('data-theme', 'dark_dimmed');
+            script2.setAttribute('data-lang', 'en');
+            
+            script2.addEventListener('load', () => console.log('Giscus 2 loaded'));
+            script2.addEventListener('error', (e) => console.error('Giscus 2 failed:', e));
+            
+            container.appendChild(script2);
+        }
+    </script>
+</body>
+</html>
