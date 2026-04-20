@@ -235,7 +235,7 @@
       toggleBtn.setAttribute("aria-expanded", !isExpanded);
       toggleBtn.style.transform = isExpanded ? "rotate(0deg)" : "rotate(180deg)";
       
-      // Use CSS class for smooth height animation
+      // Use CSS class for smooth animation
       if (!isExpanded) {
         commentsSection.classList.add("open");
         commentsContent.style.display = "block";

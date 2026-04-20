@@ -417,14 +417,17 @@ main {
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   border-top: 1px solid var(--border-subtle);
-  max-height: 0;
   overflow: hidden;
-  transition: max-height var(--transition), padding var(--transition);
 }
 
-.card-comments.open {
-  max-height: 320px;
-  padding: 0;
+.comments-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height var(--transition);
+}
+
+.card-comments.open .comments-content {
+  max-height: 280px;
 }
 
 .comments-header {
