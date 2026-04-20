@@ -380,7 +380,7 @@ main {
 /* ── Photo card ── */
 .photo-card {
   position: relative;
-  overflow: visible;
+  overflow: hidden;
   border-radius: var(--radius-card);
   border: 1px solid var(--border-subtle);
   background: var(--bg-card);
@@ -389,7 +389,6 @@ main {
   transition: border-color var(--transition), transform var(--transition), box-shadow var(--transition);
   display: flex;
   flex-direction: column;
-  z-index: 1;
 }
 
 /* Hero card for single image dates */
@@ -412,49 +411,56 @@ main {
   max-height: 380px;
 }
 
-/* Inline comments section - absolute positioning below card */
-.card-comments {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  background: rgba(6, 10, 16, 0.98);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+/* Comment preview section */
+.comment-preview {
   border-top: 1px solid var(--border-subtle);
-  border-radius: 0 0 var(--radius-card) var(--radius-card);
-  z-index: 100;
-  transform: translateY(-10px);
-  opacity: 0;
+  background: rgba(11, 16, 24, 0.4);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  padding: 6px 10px;
+  cursor: pointer;
   transition: all var(--transition);
-  pointer-events: none;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 }
 
-.card-comments.open {
-  transform: translateY(0);
-  opacity: 1;
-  pointer-events: auto;
+.comment-preview:hover {
+  background: rgba(42, 92, 143, 0.15);
 }
 
-.comments-content {
-  display: none;
-  max-height: 300px;
-  overflow: auto;
+.comment-preview-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  font-family: 'Montserrat', sans-serif;
 }
 
-.card-comments.open .comments-content {
-  display: block;
+.comment-preview-icon {
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--blue);
+}
+
+.comment-preview-text {
+  opacity: 0.8;
+}
+
+/* Inline comments section */
+.card-comments {
+  border-top: 1px solid var(--border-subtle);
+  background: rgba(11, 16, 24, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 .comments-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 12px;
+  padding: 8px 10px;
   cursor: pointer;
   transition: background-color var(--transition);
-  border-bottom: 1px solid var(--border-subtle);
 }
 
 .comments-header:hover {
@@ -489,10 +495,10 @@ main {
 }
 
 .comments-content {
-  max-height: 320px;
+  border-top: 1px solid var(--border-subtle);
+  min-height: 120px;
+  max-height: 300px;
   overflow: auto;
-  display: flex;
-  flex-direction: column;
 }
 
 .comments-status {
@@ -502,14 +508,10 @@ main {
   text-align: center;
   padding: 12px;
   font-family: 'Montserrat', sans-serif;
-  order: 2; /* Status at bottom */
 }
 
 .giscus-inline-container {
-  padding: 12px;
-  flex: 1;
-  min-height: 0;
-  order: 1; /* Comments on top */
+  padding: 8px;
 }
 
 .giscus-inline-container > iframe {
