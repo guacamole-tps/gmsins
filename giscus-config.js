@@ -6,7 +6,7 @@ window.GMS_GISCUS_CONFIG = {
   mapping: "specific",
   reactionsEnabled: "1",
   emitMetadata: "0",
-  inputPosition: "top",
+  inputPosition: "bottom",
   theme: "dark_dimmed",
   lang: "en",
 };

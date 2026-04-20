@@ -411,23 +411,20 @@ main {
   max-height: 380px;
 }
 
-/* Inline comments section - overlay style */
+/* Inline comments section - below image style */
 .card-comments {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: rgba(6, 10, 16, 0.98);
+  background: rgba(6, 10, 16, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   border-top: 1px solid var(--border-subtle);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  z-index: 10;
-  transform: translateY(100%);
-  transition: transform var(--transition);
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height var(--transition), padding var(--transition);
 }
 
 .card-comments.open {
-  transform: translateY(0);
+  max-height: 320px;
+  padding: 0;
 }
 
 .comments-header {
