@@ -217,46 +217,16 @@
     commentsSection.appendChild(commentsContent);
     card.appendChild(commentsSection);
 
-    // Smart comments loading
+    // Simple comments loading - collapsed by default
     const toggleBtn = commentsHeader.querySelector(".comments-toggle-btn");
     const commentsCount = commentsHeader.querySelector(".comments-count");
     let commentsLoaded = false;
-    let commentsExpanded = false;
     
-    // Check if discussion has comments and expand accordingly
-    async function checkAndLoadComments() {
-      if (commentsLoaded) return;
-      
-      commentsLoaded = true;
-      commentsStatus.textContent = "Loading comments...";
-      
-      // Load comments first
-      await loadInlineComments(commentsContainer, src, commentsStatus);
-      
-      // Check if there are any comments after a short delay
-      setTimeout(() => {
-        const hasComments = checkForComments(commentsContainer);
-        
-        if (hasComments) {
-          // Expand if there are comments
-          commentsExpanded = true;
-          toggleBtn.setAttribute("aria-expanded", "true");
-          toggleBtn.style.transform = "rotate(180deg)";
-          commentsContent.style.display = "block";
-          commentsStatus.textContent = "";
-        } else {
-          // Keep collapsed if no comments
-          commentsExpanded = false;
-          toggleBtn.setAttribute("aria-expanded", "false");
-          toggleBtn.style.transform = "rotate(0deg)";
-          commentsContent.style.display = "none";
-          commentsStatus.textContent = "No comments yet";
-        }
-      }, 2000); // Wait for Giscus to load
-    }
-    
-    // Start checking comments
-    checkAndLoadComments();
+    // Set initial collapsed state
+    toggleBtn.setAttribute("aria-expanded", "false");
+    toggleBtn.style.transform = "rotate(0deg)";
+    commentsContent.style.display = "none";
+    commentsStatus.textContent = "Add a comment";
     
     // Toggle functionality
     toggleBtn.addEventListener("click", (e) => {
@@ -265,9 +235,8 @@
       toggleBtn.setAttribute("aria-expanded", !isExpanded);
       commentsContent.style.display = isExpanded ? "none" : "block";
       toggleBtn.style.transform = isExpanded ? "rotate(0deg)" : "rotate(180deg)";
-      commentsExpanded = !isExpanded;
       
-      // Load comments if user manually expands
+      // Load comments only when user expands
       if (!commentsLoaded && !isExpanded) {
         commentsLoaded = true;
         commentsStatus.textContent = "Loading comments...";
@@ -434,22 +403,7 @@
     giscusContainer.appendChild(script);
   }
 
-  function checkForComments(container) {
-    // Check if Giscus has loaded any comments
-    const iframe = container.querySelector('iframe');
-    if (!iframe) return false;
-    
-    try {
-      // Try to access iframe content (may be blocked by CORS)
-      const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-      const commentElements = iframeDoc.querySelectorAll('.giscus-comment, .comment, [data-comment-id]');
-      return commentElements.length > 0;
-    } catch (e) {
-      // Fallback: check if iframe has content (indicates comments exist)
-      return iframe.src && iframe.src.includes('giscus');
-    }
-  }
-
+  
   function loadInlineComments(container, src, statusElement) {
     const config = getGiscusConfig();
     if (!hasRequiredGiscusConfig(config)) {
