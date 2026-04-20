@@ -151,10 +151,24 @@
       </svg>
     </button>
 
+    <button id="lightbox-comments-toggle" class="lightbox-comments-toggle" aria-expanded="false" aria-controls="lightbox-comments-panel">
+      Comments
+    </button>
+
     <p id="lightbox-caption"></p>
     <p class="lightbox-counter" id="lightbox-counter"></p>
+
+    <aside id="lightbox-comments-panel" aria-label="Story comments">
+      <div class="comments-panel-header">
+        <h3>Comments</h3>
+        <button id="lightbox-comments-close" aria-label="Close comments">Close</button>
+      </div>
+      <p id="comments-status" class="comments-status"></p>
+      <div id="giscus-container"></div>
+    </aside>
   </div>
 
+  <script src="giscus-config.js"></script>
   <script src="gallery.js"></script>
 </body>
 </html>
