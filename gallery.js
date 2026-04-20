@@ -203,14 +203,13 @@
     
     const commentsContent = document.createElement("div");
     commentsContent.className = "comments-content";
-    commentsContent.style.display = "none";
     
     const commentsContainer = document.createElement("div");
     commentsContainer.className = "giscus-inline-container";
     
     const commentsStatus = document.createElement("p");
     commentsStatus.className = "comments-status";
-    commentsStatus.textContent = "Click to load comments";
+    commentsStatus.textContent = "Loading comments...";
     
     commentsContent.appendChild(commentsStatus);
     commentsContent.appendChild(commentsContainer);
@@ -218,23 +217,24 @@
     commentsSection.appendChild(commentsContent);
     card.appendChild(commentsSection);
 
-    // Toggle comments
-    let commentsLoaded = false;
+    // Auto-load comments
     const toggleBtn = commentsHeader.querySelector(".comments-toggle-btn");
     const commentsCount = commentsHeader.querySelector(".comments-count");
     
+    // Set initial state
+    toggleBtn.setAttribute("aria-expanded", "true");
+    toggleBtn.style.transform = "rotate(180deg)";
+    
+    // Load comments immediately
+    loadInlineComments(commentsContainer, src, commentsStatus);
+    
+    // Toggle functionality for hiding/showing
     toggleBtn.addEventListener("click", (e) => {
       e.stopPropagation(); // Prevent opening lightbox
       const isExpanded = toggleBtn.getAttribute("aria-expanded") === "true";
       toggleBtn.setAttribute("aria-expanded", !isExpanded);
       commentsContent.style.display = isExpanded ? "none" : "block";
       toggleBtn.style.transform = isExpanded ? "rotate(0deg)" : "rotate(180deg)";
-      
-      if (!commentsLoaded && !isExpanded) {
-        commentsLoaded = true;
-        commentsStatus.textContent = "Loading comments...";
-        loadInlineComments(commentsContainer, src, commentsStatus);
-      }
     });
 
     card.addEventListener("click", () => openLightbox(flatIdx));
