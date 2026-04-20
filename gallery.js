@@ -240,14 +240,27 @@
       try {
         // Use GitHub API to check for discussion comments
         const apiUrl = `https://api.github.com/repos/${config.repo}/discussions?per_page=100`;
-        const response = await fetch(apiUrl);
+        const response = await fetch(apiUrl, {
+          headers: {
+            'Accept': 'application/vnd.github.v3+json'
+          }
+        });
+        
+        if (!response.ok) {
+          console.warn('GitHub API response not OK:', response.status);
+          return false;
+        }
+        
         const discussions = await response.json();
+        console.log('Checking discussions for term:', term);
+        console.log('Found discussions:', discussions.length);
         
         // Find discussion matching our term
         const discussion = discussions.find(d => 
           d.title.includes(term) && d.comments > 0
         );
         
+        console.log('Matching discussion:', discussion ? 'found' : 'not found');
         return discussion && discussion.comments > 0;
       } catch (error) {
         console.warn('Could not check discussion comments:', error);
