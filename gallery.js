@@ -14,6 +14,21 @@
   let sortAsc = false;       // default: newest first
   let currentPage = 1;       // current page number
   let itemsPerPage = 10;     // dates per page
+  let commentsOpen = false;
+  let currentDiscussionTerm = "";
+
+  const defaultGiscusConfig = {
+    repo: "",
+    repoId: "",
+    category: "",
+    categoryId: "",
+    mapping: "specific",
+    reactionsEnabled: "1",
+    emitMetadata: "0",
+    inputPosition: "top",
+    theme: "dark_dimmed",
+    lang: "en",
+  };
 
   // ── DOM refs ───────────────────────────────────────
   const gallery      = document.getElementById("gallery");
@@ -37,6 +52,11 @@
   const pageNumbers  = document.getElementById("page-numbers");
   const prevPageBtn  = document.getElementById("prev-page");
   const nextPageBtn  = document.getElementById("next-page");
+  const commentsToggleBtn = document.getElementById("lightbox-comments-toggle");
+  const commentsPanel = document.getElementById("lightbox-comments-panel");
+  const commentsCloseBtn = document.getElementById("lightbox-comments-close");
+  const commentsStatus = document.getElementById("comments-status");
+  const giscusContainer = document.getElementById("giscus-container");
 
   // ── Boot ───────────────────────────────────────────
   async function init() {
@@ -259,6 +279,84 @@
     render(allData);
   }
 
+  function getGiscusConfig() {
+    const userConfig = window.GMS_GISCUS_CONFIG || {};
+    return { ...defaultGiscusConfig, ...userConfig };
+  }
+
+  function hasRequiredGiscusConfig(config) {
+    return Boolean(config.repo && config.repoId && config.category && config.categoryId);
+  }
+
+  function buildDiscussionTerm(item) {
+    const cleanedSrc = item.src
+      .replace(/^pics\//, "")
+      .replace(/\.[^.]+$/, "")
+      .replace(/[^a-zA-Z0-9/_-]/g, "")
+      .replace(/[\/]/g, "-");
+    return `story-${cleanedSrc}`;
+  }
+
+  function setCommentsStatus(text) {
+    commentsStatus.textContent = text || "";
+  }
+
+  function clearCommentsEmbed() {
+    currentDiscussionTerm = "";
+    giscusContainer.innerHTML = "";
+    setCommentsStatus("");
+  }
+
+  function setCommentsPanelOpen(open) {
+    commentsOpen = open;
+    commentsPanel.classList.toggle("open", open);
+    commentsToggleBtn.setAttribute("aria-expanded", open ? "true" : "false");
+    if (!open) return;
+    syncCommentsForCurrentImage();
+  }
+
+  function mountGiscus(term) {
+    const config = getGiscusConfig();
+    if (!hasRequiredGiscusConfig(config)) {
+      giscusContainer.innerHTML = "";
+      setCommentsStatus("Comments are not configured yet. Add Giscus repo/category IDs to enable this panel.");
+      return;
+    }
+
+    giscusContainer.innerHTML = "";
+    setCommentsStatus("Loading comments...");
+
+    const script = document.createElement("script");
+    script.src = "https://giscus.app/client.js";
+    script.async = true;
+    script.crossOrigin = "anonymous";
+    script.setAttribute("data-repo", config.repo);
+    script.setAttribute("data-repo-id", config.repoId);
+    script.setAttribute("data-category", config.category);
+    script.setAttribute("data-category-id", config.categoryId);
+    script.setAttribute("data-mapping", config.mapping);
+    script.setAttribute("data-term", term);
+    script.setAttribute("data-reactions-enabled", config.reactionsEnabled);
+    script.setAttribute("data-emit-metadata", config.emitMetadata);
+    script.setAttribute("data-input-position", config.inputPosition);
+    script.setAttribute("data-theme", config.theme);
+    script.setAttribute("data-lang", config.lang);
+    script.addEventListener("load", () => setCommentsStatus(""));
+    giscusContainer.appendChild(script);
+  }
+
+  function syncCommentsForCurrentImage() {
+    if (!commentsOpen) return;
+    const item = flatImages[lightboxIndex];
+    if (!item) return;
+
+    const nextTerm = buildDiscussionTerm(item);
+    if (nextTerm === currentDiscussionTerm) return;
+
+    currentDiscussionTerm = nextTerm;
+    mountGiscus(nextTerm);
+  }
+
   // ── Lightbox ───────────────────────────────────────
   function openLightbox(idx) {
     if (idx < 0 || idx >= flatImages.length) return;
@@ -267,9 +365,12 @@
     lightbox.classList.add("open");
     document.body.style.overflow = "hidden";
     lightboxImg.focus();
+    if (commentsOpen) syncCommentsForCurrentImage();
   }
 
   function closeLightbox() {
+    setCommentsPanelOpen(false);
+    clearCommentsEmbed();
     lightbox.classList.remove("open");
     document.body.style.overflow = "";
   }
@@ -301,6 +402,11 @@
     lbClose.addEventListener("click", closeLightbox);
     lbPrev.addEventListener("click", () => lightboxStep(-1));
     lbNext.addEventListener("click", () => lightboxStep(1));
+
+    commentsToggleBtn.addEventListener("click", () => {
+      setCommentsPanelOpen(!commentsOpen);
+    });
+    commentsCloseBtn.addEventListener("click", () => setCommentsPanelOpen(false));
 
     lightbox.addEventListener("click", (e) => {
       if (e.target === lightbox) closeLightbox();

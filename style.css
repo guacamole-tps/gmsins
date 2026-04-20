@@ -575,6 +575,107 @@ main {
   color: var(--text-muted);
 }
 
+.lightbox-comments-toggle {
+  position: fixed;
+  bottom: 20px;
+  right: 28px;
+  z-index: 1002;
+  background: rgba(11, 16, 24, 0.92);
+  border: 1px solid var(--border-subtle);
+  border-radius: 2px;
+  color: var(--text-primary);
+  font-family: 'Montserrat', sans-serif;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.lightbox-comments-toggle:hover,
+.lightbox-comments-toggle[aria-expanded="true"] {
+  border-color: var(--blue-bright);
+  background: rgba(26, 53, 85, 0.92);
+}
+
+#lightbox-comments-panel {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: min(52vh, 460px);
+  background: rgba(6, 10, 16, 0.98);
+  border-top: 1px solid var(--border-subtle);
+  box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.45);
+  z-index: 1001;
+  transform: translateY(100%);
+  transition: transform var(--transition);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+#lightbox-comments-panel.open {
+  transform: translateY(0);
+}
+
+.comments-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.comments-panel-header h3 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.1rem;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  color: var(--text-primary);
+}
+
+#lightbox-comments-close {
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  border-radius: 2px;
+  color: var(--text-muted);
+  font-family: 'Montserrat', sans-serif;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  padding: 7px 10px;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+#lightbox-comments-close:hover {
+  border-color: var(--blue);
+  color: var(--blue-bright);
+}
+
+.comments-status {
+  min-height: 18px;
+  padding: 10px 16px 0;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+}
+
+#giscus-container {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 10px 16px 16px;
+}
+
+#giscus-container > script,
+#giscus-container > iframe {
+  width: 100%;
+}
+
 /* ── Empty / loading states ── */
 #empty-state {
   text-align: center;
@@ -757,4 +858,15 @@ footer a:hover { color: var(--blue-bright); }
   .page-btn { padding: 9px 14px; }
   .page-number-btn { min-width: 34px; height: 34px; }
   .lightbox-nav { display: none; }
+  #lightbox-caption { margin-top: 10px; }
+  .lightbox-counter { bottom: 74px; }
+  .lightbox-comments-toggle {
+    right: 12px;
+    bottom: 18px;
+    padding: 9px 10px;
+    letter-spacing: 0.14em;
+  }
+  #lightbox-comments-panel {
+    height: min(62vh, 500px);
+  }
 }
