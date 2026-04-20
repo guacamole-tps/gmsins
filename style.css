@@ -393,30 +393,46 @@ main {
 
 /* Hero card for single image dates */
 .layout-1 .photo-card {
-  /* Allow dynamic height */
+  max-height: 520px;
 }
 
 /* Side-by-side cards */
 .layout-2 .photo-card {
-  /* Allow dynamic height */
+  max-height: 480px;
 }
 
 /* Equal side-by-side cards */
 .layout-3 .photo-card {
-  /* Allow dynamic height */
+  max-height: 440px;
 }
 
 /* Many cards */
 .layout-many .photo-card {
-  /* Allow dynamic height */
+  max-height: 380px;
 }
 
-/* Inline comments section - below image style */
+/* Inline comments section - absolute positioning below card */
 .card-comments {
-  background: rgba(6, 10, 16, 0.6);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: rgba(6, 10, 16, 0.98);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border-top: 1px solid var(--border-subtle);
+  border-radius: 0 0 var(--radius-card) var(--radius-card);
+  z-index: 20;
+  transform: translateY(-10px);
+  opacity: 0;
+  transition: all var(--transition);
+  pointer-events: none;
+}
+
+.card-comments.open {
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .comments-content {
