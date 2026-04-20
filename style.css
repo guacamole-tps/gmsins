@@ -389,6 +389,7 @@ main {
   transition: border-color var(--transition), transform var(--transition), box-shadow var(--transition);
   display: flex;
   flex-direction: column;
+  z-index: 1;
 }
 
 /* Hero card for single image dates */
@@ -422,11 +423,12 @@ main {
   -webkit-backdrop-filter: blur(12px);
   border-top: 1px solid var(--border-subtle);
   border-radius: 0 0 var(--radius-card) var(--radius-card);
-  z-index: 20;
+  z-index: 100;
   transform: translateY(-10px);
   opacity: 0;
   transition: all var(--transition);
   pointer-events: none;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 }
 
 .card-comments.open {
