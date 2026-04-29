@@ -6,7 +6,6 @@ Instagram Story Screenshotter
 - Saves to pics/YYYY-MM-DD/
 """
 
-import argparse
 import asyncio
 import os
 import re
@@ -248,22 +247,18 @@ async def screenshot_story_frame(page, index: int, save_dir: Path) -> bool:
     return True
 
 
-async def run(headless=False):
+async def run():
     save_dir = get_today_dir()
     print(f"[*] Saving screenshots to: {save_dir}")
 
     CHROME_PROFILE_DIR.mkdir(parents=True, exist_ok=True)
 
-    launch_args = ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"]
-    if not headless:
-        launch_args.append("--start-maximized")
-
     async with async_playwright() as p:
         browser = await p.chromium.launch_persistent_context(
             user_data_dir=str(CHROME_PROFILE_DIR),
-            headless=headless,
+            headless=False,
             viewport={"width": 1280, "height": 900},
-            args=launch_args,
+            args=["--start-maximized"],
         )
 
         page = browser.pages[0] if browser.pages else await browser.new_page()
@@ -355,8 +350,4 @@ async def run(headless=False):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Instagram Story Screenshotter")
-    parser.add_argument("--headless", action="store_true", help="Run in headless mode (for VPS/server)")
-    args = parser.parse_args()
-    
-    asyncio.run(run(headless=args.headless))
+    asyncio.run(run())
