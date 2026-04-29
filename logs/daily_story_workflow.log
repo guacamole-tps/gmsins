@@ -1,0 +1,18 @@
+============================================================
+[2026-04-29 06:59:28 UTC] Workflow started
+[STEP] Running auto_story.py
+[*] Saving screenshots to: /root/gms/webpage/pics/2026-04-29
+[ok] Session found, verifying...
+[*] Navigating to stories: https://www.instagram.com/stories/gianmarcoschiarettiofficial/
+[*] Dismissing 'View story' confirmation...
+  [ok] Story 1: saved -> 001.png (element 486x864)
+  [ok] Story 2: saved -> 002.png (element 486x864)
+  [ok] Story 3: saved -> 003.png (element 486x864)
+  [ok] Story 4: saved -> 004.png (element 486x864)
+[*] Stories finished.
+
+[done] Captured 4 story screenshot(s) in /root/gms/webpage/pics/2026-04-29
+[*] Keeping browser open for 5 seconds before closing...
+[STEP] Running scan.py
+[ok] Scanned 89 date(s), 219 image(s) -> gallery-data.json
+[STEP] Running push_to_github_token.py
